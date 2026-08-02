@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>From Circuits to Systems — Amirali Zarei</title>
+<meta name="description" content="Bridging high school physics and systems engineering — an essay by Amirali Zarei">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg: #0a0f1d;
+    --bg-elevated: #0d1420;
+    --bg-card: #101827;
+    --line: #1e293b;
+
+    --text: #f8fafc;
+    --text-dim: #94a3b8;
+    --text-faint: #5b6b82;
+
+    --accent: #38bdf8;
+    --accent-strong: #06b6d4;
+
+    --font: 'Inter', system-ui, -apple-system, sans-serif;
+    --font-mono: 'JetBrains Mono', monospace;
+    --radius: 10px;
+  }
+
+  *{ box-sizing: border-box; }
+  html{ scroll-behavior: smooth; }
+  body{
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--font);
+    line-height: 1.75;
+    -webkit-font-smoothing: antialiased;
+  }
+  a{ color: inherit; text-decoration: none; }
+  :focus-visible{ outline: 2px solid var(--accent); outline-offset: 3px; }
+
+  /* ===== NAV ===== */
+  .nav{
+    position: sticky; top:0; z-index: 50;
+    background: rgba(10,15,29,0.85);
+    backdrop-filter: blur(10px);
+    border-bottom: 1px solid var(--line);
+  }
+  .nav-inner{
+    max-width: 760px; margin: 0 auto;
+    padding: 16px 24px;
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .nav-logo{ font-weight: 700; font-size: 15px; color: var(--accent); }
+  .back-link{ font-size: 14px; color: var(--text-dim); transition: color .2s ease; }
+  .back-link:hover{ color: var(--text); }
+
+  /* ===== ARTICLE ===== */
+  .article-wrap{ max-width: 720px; margin: 0 auto; padding: 64px 24px 120px; }
+
+  .article-meta{
+    font-size: 13px; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase;
+    color: var(--accent); margin: 0 0 18px;
+  }
+  .article-title{
+    font-size: clamp(28px, 5vw, 42px);
+    font-weight: 800; line-height: 1.25; margin: 0 0 16px;
+  }
+  .article-sub{ font-size: 15.5px; color: var(--text-dim); margin: 0 0 12px; }
+  .article-byline{ font-size: 13.5px; color: var(--text-faint); margin: 0 0 48px; padding-bottom: 40px; border-bottom: 1px solid var(--line); }
+
+  .article-body h2{
+    font-size: 21px; font-weight: 700; margin: 52px 0 18px;
+    display: flex; align-items: baseline; gap: 10px;
+  }
+  .article-body h2 .num{ color: var(--accent); font-family: var(--font-mono); font-size: 16px; }
+  .article-body p{ font-size: 16px; color: #dbe4ee; margin: 0 0 18px; }
+  .article-body ul{ margin: 0 0 18px; padding-inline-start: 20px; }
+  .article-body li{ font-size: 16px; color: #dbe4ee; margin-bottom: 10px; }
+  .article-body strong{ color: var(--text); font-weight: 600; }
+
+  .formula{
+    font-family: var(--font-mono);
+    font-size: 14.5px;
+    color: var(--accent);
+    background: rgba(56,189,248,0.08);
+    border: 1px solid rgba(56,189,248,0.25);
+    border-radius: 6px;
+    padding: 1px 7px;
+    white-space: nowrap;
+  }
+
+  .formula-block{
+    font-family: var(--font-mono);
+    font-size: 16px;
+    color: var(--accent);
+    background: var(--bg-card);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    padding: 16px 20px;
+    margin: 0 0 22px;
+    text-align: center;
+  }
+
+  .takeaway{
+    border-inline-start: 3px solid var(--accent-strong);
+    background: var(--bg-card);
+    border-radius: 0 var(--radius) var(--radius) 0;
+    padding: 16px 20px;
+    margin: 20px 0;
+    font-size: 15px;
+    color: var(--text-dim);
+  }
+  .takeaway strong{ color: var(--accent); }
+
+  hr.divider{
+    border: none; border-top: 1px solid var(--line);
+    margin: 48px 0;
+  }
+
+  .article-footer{
+    margin-top: 60px; padding-top: 32px; border-top: 1px solid var(--line);
+    text-align: center;
+  }
+  .btn{
+    display: inline-block; padding: 12px 24px; border-radius: var(--radius);
+    font-size: 14px; font-weight: 600; border: 1px solid var(--line);
+    transition: border-color .2s ease, transform .2s ease;
+  }
+  .btn:hover{ border-color: var(--accent-strong); transform: translateY(-2px); }
+</style>
+</head>
+<body>
+
+<nav class="nav">
+  <div class="nav-inner">
+    <a href="../index.html" class="nav-logo">AZ</a>
+    <a href="../index.html#writing" class="back-link">← Back to Writing</a>
+  </div>
+</nav>
+
+<article class="article-wrap">
+  <p class="article-meta">Physics &amp; Systems Thinking</p>
+  <h1 class="article-title">From Circuits to Systems: Bridging High School Physics and Systems Engineering</h1>
+  <p class="article-sub">Conceptual Analysis of 11th-Grade Physics (Electricity &amp; Circuits) through Systems Thinking and Optimization</p>
+  <p class="article-byline">By Amirali Zarei</p>
+
+  <div class="article-body">
+    <p>Physics is often reduced to a set of rigid mathematical formulas meant solely for standardized exams. However, when viewed through the lens of <strong>Systems Thinking</strong>, the fundamental laws governing electrical circuits closely mirror the principles behind industrial processes, supply chain logistics, and organizational workflows. In this article, I re-examine core concepts from high school physics to construct analytical frameworks for understanding real-world systems.</p>
+
+    <hr class="divider">
+
+    <h2><span class="num">01</span> Current, Voltage, and Signal Propagation: The Filled Hose Analogy</h2>
+    <p>A common conceptual challenge in electromagnetism is understanding how an electric signal travels near the speed of light while electron drift velocity remains remarkably slow.</p>
+    <p>The most intuitive physical model is a <strong>water hose pre-filled with water</strong>:</p>
+    <ul>
+      <li>When a hose is already filled, applying pressure at one end instantly causes water to spill out from the opposite end. One does not need to wait for a single water molecule to travel the full length of the hose.</li>
+      <li><strong>The Voltage Source (Battery):</strong> Functions as the pump, creating the necessary potential difference (<span class="formula">ΔV</span>) to drive movement.</li>
+      <li><strong>Electric Current (I):</strong> Represents the systemic flow rate in response to that initial pressure gradient.</li>
+    </ul>
+
+    <h2><span class="num">02</span> Resistance as a Control Mechanism</h2>
+    <div class="formula-block">V = IR</div>
+    <p>Far from being merely an undesirable source of energy loss, resistance (R) is a fundamental tool for intelligent flow distribution.</p>
+    <p>Electric current inherently follows the path of least resistance. In a multi-branch parallel circuit, we utilize Ohm's Law to regulate resource distribution:</p>
+    <ul>
+      <li><strong>Practical Demonstration:</strong> Consider a circuit with three parallel branches, each containing a resistor of a different value (high, medium, and low) connected to identical light bulbs. Upon closing the switch, the bulbs illuminate at varying brightness levels (dim, moderate, and bright).</li>
+    </ul>
+    <div class="takeaway"><strong>Systems Takeaway:</strong> Resistance allows engineers to dictate how much resource (current) each subsystem receives, preventing overload and ensuring operational stability.</div>
+
+    <h2><span class="num">03</span> Series vs. Parallel Architecture: Designing for Resilience</h2>
+    <p>The structural distinction between series and parallel circuits provides a crucial lesson in engineering reliability:</p>
+    <ul>
+      <li><strong>Series Circuits (Single Point of Failure):</strong> If one component fails, the entire loop breaks. This is analogous to a rigid process reliant solely on a single strategy with no fallback options.</li>
+      <li><strong>Parallel Circuits (Redundancy &amp; Plan B):</strong> In a parallel architecture, the failure of one branch does not halt the entire system. Modern engineering design relies heavily on parallel structures to ensure continuity when individual components fail.</li>
+    </ul>
+
+    <h2><span class="num">04</span> Energy Dissipation and Joule's Law</h2>
+    <div class="formula-block">P<sub>loss</sub> = I²R &nbsp;·&nbsp; P<sub>out</sub> = εI − I²R</div>
+    <p>In any real-world system, energy loss cannot be reduced to absolute zero; however, it can be minimized.</p>
+    <p>In industrial and organizational workflows, <strong>"resistance" translates to bureaucratic friction, redundant intermediaries, and operational bottlenecks.</strong></p>
+    <div class="takeaway"><strong>Optimization Strategy:</strong> By removing unnecessary intermediaries and leveraging modern technology — such as integrating Artificial Intelligence for repetitive computational tasks — we reduce systemic friction (R) and maximize overall efficiency (P<sub>out</sub>).</div>
+
+    <h2><span class="num">05</span> Kirchhoff's Current Law: Conservation and System Equilibrium</h2>
+    <div class="formula-block">Σ I<sub>in</sub> = Σ I<sub>out</sub></div>
+    <p>This is an expression of conservation within a closed system:</p>
+    <ul>
+      <li><strong>Performance Balance:</strong> High-quality systemic output cannot exist without proportional input. The value generated by a system is a direct function of the energy, effort, and resources injected into it.</li>
+      <li><strong>Process Management:</strong> In logistics nodes or urban traffic networks, an imbalance between incoming and outgoing flow leads to systemic congestion or stagnation.</li>
+    </ul>
+
+    <h2><span class="num">06</span> Capacitors as Systemic Buffers</h2>
+    <p>Capacitors store electrical energy in an electric field and release it when fluctuations occur, stabilizing the voltage across a circuit.</p>
+    <div class="takeaway"><strong>Supply Chain Equivalent:</strong> In logistics and supply chain management, Safety Stock (Buffer Inventory) performs the exact function of a capacitor. Maintaining critical buffer stock absorbs sudden demand surges or supply chain disruptions, preventing total operational shutdown.</div>
+
+    <hr class="divider">
+
+    <h2><span class="num">—</span> Conclusion</h2>
+    <p>Physics is not merely the mathematics of matter; it is the modeling language of complex networks. A rigorous conceptual understanding of voltage, resistance, conservation laws, and capacitive buffering provides a strong analytical foundation for solving complex problems in <strong>Industrial Engineering, Logistics, and Systems Optimization</strong>.</p>
+  </div>
+
+  <div class="article-footer">
+    <a href="../index.html#writing" class="btn">← Back to all writing</a>
+  </div>
+</article>
+
+</body>
+</html>
