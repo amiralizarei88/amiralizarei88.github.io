@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The Intersection of Systems Engineering and Modern AI — Amirali Zarei</title>
+<meta name="description" content="Why modern AI is a force multiplier, not a replacement, for systems engineers — an essay by Amirali Zarei">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg: #0a0f1d;
+    --bg-elevated: #0d1420;
+    --bg-card: #101827;
+    --line: #1e293b;
+
+    --text: #f8fafc;
+    --text-dim: #94a3b8;
+    --text-faint: #5b6b82;
+
+    --accent: #38bdf8;
+    --accent-strong: #06b6d4;
+
+    --font: 'Inter', system-ui, -apple-system, sans-serif;
+    --font-mono: 'JetBrains Mono', monospace;
+    --radius: 10px;
+  }
+
+  *{ box-sizing: border-box; }
+  html{ scroll-behavior: smooth; }
+  body{
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--font);
+    line-height: 1.75;
+    -webkit-font-smoothing: antialiased;
+  }
+  a{ color: inherit; text-decoration: none; }
+  :focus-visible{ outline: 2px solid var(--accent); outline-offset: 3px; }
+
+  /* ===== NAV ===== */
+  .nav{
+    position: sticky; top:0; z-index: 50;
+    background: rgba(10,15,29,0.85);
+    backdrop-filter: blur(10px);
+    border-bottom: 1px solid var(--line);
+  }
+  .nav-inner{
+    max-width: 760px; margin: 0 auto;
+    padding: 16px 24px;
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .nav-logo{ font-weight: 700; font-size: 15px; color: var(--accent); }
+  .back-link{ font-size: 14px; color: var(--text-dim); transition: color .2s ease; }
+  .back-link:hover{ color: var(--text); }
+
+  /* ===== ARTICLE ===== */
+  .article-wrap{ max-width: 720px; margin: 0 auto; padding: 64px 24px 120px; }
+
+  .article-meta{
+    font-size: 13px; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase;
+    color: var(--accent); margin: 0 0 18px;
+  }
+  .article-title{
+    font-size: clamp(28px, 5vw, 42px);
+    font-weight: 800; line-height: 1.25; margin: 0 0 16px;
+  }
+  .article-sub{ font-size: 15.5px; color: var(--text-dim); margin: 0 0 12px; }
+  .article-byline{ font-size: 13.5px; color: var(--text-faint); margin: 0 0 48px; padding-bottom: 40px; border-bottom: 1px solid var(--line); }
+
+  .article-body h2{
+    font-size: 21px; font-weight: 700; margin: 52px 0 18px;
+    display: flex; align-items: baseline; gap: 10px;
+  }
+  .article-body h2 .num{ color: var(--accent); font-family: var(--font-mono); font-size: 16px; }
+  .article-body p{ font-size: 16px; color: #dbe4ee; margin: 0 0 18px; }
+  .article-body ul{ margin: 0 0 18px; padding-inline-start: 20px; }
+  .article-body li{ font-size: 16px; color: #dbe4ee; margin-bottom: 10px; }
+  .article-body strong{ color: var(--text); font-weight: 600; }
+
+  .formula-block{
+    font-family: var(--font-mono);
+    font-size: 15.5px;
+    color: var(--accent);
+    background: var(--bg-card);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    padding: 18px 20px;
+    margin: 0 0 22px;
+    text-align: center;
+    line-height: 1.6;
+  }
+
+  .takeaway{
+    border-inline-start: 3px solid var(--accent-strong);
+    background: var(--bg-card);
+    border-radius: 0 var(--radius) var(--radius) 0;
+    padding: 16px 20px;
+    margin: 20px 0;
+    font-size: 15px;
+    color: var(--text-dim);
+  }
+  .takeaway strong{ color: var(--accent); }
+
+  hr.divider{
+    border: none; border-top: 1px solid var(--line);
+    margin: 48px 0;
+  }
+
+  .article-footer{
+    margin-top: 60px; padding-top: 32px; border-top: 1px solid var(--line);
+    text-align: center;
+  }
+  .btn{
+    display: inline-block; padding: 12px 24px; border-radius: var(--radius);
+    font-size: 14px; font-weight: 600; border: 1px solid var(--line);
+    transition: border-color .2s ease, transform .2s ease;
+  }
+  .btn:hover{ border-color: var(--accent-strong); transform: translateY(-2px); }
+</style>
+</head>
+<body>
+
+<nav class="nav">
+  <div class="nav-inner">
+    <a href="../index.html" class="nav-logo">AZ</a>
+    <a href="../index.html#writing" class="back-link">← Back to Writing</a>
+  </div>
+</nav>
+
+<article class="article-wrap">
+  <p class="article-meta">Tech &amp; Systems Optimization</p>
+  <h1 class="article-title">The Intersection of Systems Engineering and Modern AI</h1>
+  <p class="article-byline">By Amirali Zarei</p>
+
+  <div class="article-body">
+    <p>The rapid evolution of Artificial Intelligence has sparked continuous debates about the future of engineering roles. While AI excels at executing repetitive tasks, processing massive datasets, and automating routine code, it lacks a critical human dimension: <strong>Systems Thinking, Contextual Problem-Solving, and Human Communication</strong>.</p>
+    <p>In this article, I explore why modern AI is not a replacement for systems and industrial engineers, but rather the ultimate force multiplier for those who know how to bridge technology with real-world operations.</p>
+
+    <hr class="divider">
+
+    <h2><span class="num">01</span> The Real Role of AI: Tool vs. Orchestrator</h2>
+    <p>AI can instantly analyze historical data or suggest an optimal algorithm for traffic routing. However, raw data alone does not solve real-world problems. An engineer is still required to:</p>
+    <ul>
+      <li><strong>Define the Problem:</strong> Formulate the right questions and boundary conditions for complex physical and operational networks.</li>
+      <li><strong>Interpret the Output:</strong> Translate AI-generated analytics into actionable business decisions and real-world strategies.</li>
+      <li><strong>Bridge Human and Machine Systems:</strong> Lead teams, negotiate with stakeholders, and manage organizational change — qualities that algorithms cannot replicate.</li>
+    </ul>
+
+    <h2><span class="num">02</span> AI as a Scalability Engine in Systems &amp; Logistics</h2>
+    <p>When integrated into Systems Engineering and Supply Chain Management, modern AI transforms static models into dynamic, predictive systems:</p>
+    <ul>
+      <li><strong>Predictive Inventory Management:</strong> Machine learning models predict demand spikes, allowing engineers to maintain optimal buffer stocks (Safety Stock) without over-allocating capital.</li>
+      <li><strong>Dynamic Route Optimization:</strong> Algorithms process real-time traffic and geopolitical data to adapt supply routes instantly, reducing fuel consumption and systemic friction.</li>
+      <li><strong>Process Automation:</strong> By handing off routine computational and data-entry tasks to AI tools, engineers can focus on high-level architecture and strategic optimization.</li>
+    </ul>
+    <div class="takeaway"><strong>Systems Takeaway:</strong> AI doesn't remove the need for engineers — it raises the ceiling of what one engineer can architect and oversee.</div>
+
+    <h2><span class="num">03</span> The Winning Formula for the Next Decade</h2>
+    <p>The future does not belong to pure coders who only write standard scripts, nor does it belong to managers who ignore technology. The competitive advantage belongs to those who master the intersection of three core pillars:</p>
+    <div class="formula-block">Competitive Edge = Systems Thinking + AI/Python Proficiency + Interpersonal Leadership</div>
+
+    <hr class="divider">
+
+    <h2><span class="num">—</span> Conclusion</h2>
+    <p>Artificial Intelligence will not replace systems engineers; however, engineers who leverage AI effectively will inevitably replace those who do not. By combining a strong analytical mindset in industrial processes with modern AI tools and strong communication skills, we can design more resilient, efficient, and human-centric systems for the future.</p>
+  </div>
+
+  <div class="article-footer">
+    <a href="../index.html#writing" class="btn">← Back to all writing</a>
+  </div>
+</article>
+
+</body>
+</html>
