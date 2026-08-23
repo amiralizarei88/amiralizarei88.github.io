@@ -1,0 +1,515 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>J.A.R.V.I.S.</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&family=Sora:wght@200;300;400;500;700&display=swap" rel="stylesheet"/>
+<style>
+  :root{
+    --bg-primary:#03060a; --bg-secondary:#070c14; --panel-bg:#0a1420cc;
+    --neon-cyan:#00e5ff; --neon-blue:#0072ff; --neon-dim:#0a3d4d;
+    --text-primary:#d6faff; --text-secondary:#5fb8c9; --ok:#00ffb0; --alert:#ff3355;
+  }
+  *{box-sizing:border-box}
+  html,body{height:100%; margin:0; background:var(--bg-primary); color:var(--text-primary);
+    font-family:'Sora',sans-serif; overflow:hidden;}
+  .mono{font-family:'JetBrains Mono',monospace;}
+  .glass{background:var(--panel-bg); border:1px solid var(--neon-dim); border-radius:16px;
+    backdrop-filter: blur(10px);}
+  ::-webkit-scrollbar{width:6px} ::-webkit-scrollbar-thumb{background:var(--neon-dim);border-radius:3px}
+
+  /* ---------- boot layer ---------- */
+  #boot-layer{position:fixed; inset:0; background:var(--bg-primary); z-index:100;
+    display:flex; align-items:center; justify-content:center; transition:opacity .6s ease;}
+  #boot-layer.hidden{opacity:0; pointer-events:none;}
+  .boot-phase{display:none; flex-direction:column; align-items:center; text-align:center;}
+  .boot-phase.active{display:flex;}
+  .boot-logo-ring{width:64px;height:64px;border:2px solid var(--neon-cyan);border-radius:999px;
+    animation:pulse-ring 2.4s ease-in-out infinite; margin-bottom:18px;}
+  @keyframes pulse-ring{0%,100%{transform:scale(1);opacity:.7}50%{transform:scale(1.12);opacity:1}}
+  #scan-frame{position:relative; width:520px; max-width:80vw; aspect-ratio:4/3; border-radius:18px;
+    overflow:hidden; border:2px solid var(--neon-cyan); background:#000;
+    box-shadow:0 0 40px -8px var(--neon-cyan);}
+  #scan-video{width:100%;height:100%;object-fit:cover; filter:blur(2.5px) brightness(0.85); transform:scaleX(-1);}
+  #scan-canvas{position:absolute; inset:0; width:100%; height:100%;}
+  #skip-link{margin-top:22px; font-size:12px; color:var(--text-secondary); opacity:0; transition:opacity .5s;
+    cursor:pointer; text-decoration:underline; text-underline-offset:3px;}
+  #skip-link.show{opacity:1;}
+  .unlock-ring{position:absolute; border:2px solid var(--ok); border-radius:999px; opacity:0;}
+
+  /* ---------- central orb ---------- */
+  #orb-canvas{display:block;}
+
+  /* ---------- chat drawer w/ parabola notch ---------- */
+  #drawer-wrap{position:fixed; top:0; right:0; height:100%; display:flex; z-index:40;
+    transform:translateX(105%); transition:transform .45s cubic-bezier(.16,.9,.28,1);
+    pointer-events:none;}
+  #drawer-wrap.open{transform:translateX(0); pointer-events:auto;}
+  #drawer-notch{width:56px; height:100%; flex:0 0 auto; margin-top:0;}
+  #drawer-notch svg{width:100%; height:100%; display:block;}
+  #drawer-notch path{fill:var(--panel-bg); stroke:var(--neon-dim); stroke-width:1; vector-effect:non-scaling-stroke;}
+  #drawer-panel{width:360px; height:100%; background:var(--panel-bg); border-top:1px solid var(--neon-dim);
+    border-bottom:1px solid var(--neon-dim); backdrop-filter:blur(10px); display:flex; flex-direction:column;
+    padding:18px 16px;}
+
+  /* ---------- misc ---------- */
+  .dock-btn{background:var(--neon-dim); color:var(--text-primary); border:none; border-radius:10px;
+    padding:0 14px; height:44px; font-family:'Sora'; font-weight:600; font-size:13px; cursor:pointer;
+    transition:background .2s;}
+  .dock-btn:hover{background:var(--neon-blue);}
+  .dock-btn.active{background:var(--ok); color:#03060a;}
+  .dock-btn.alert{background:var(--alert);}
+  #camera-box img{width:100%; height:100%; object-fit:cover;}
+  .fade-in{animation:fadein .3s ease;}
+  @keyframes fadein{from{opacity:0} to{opacity:1}}
+</style>
+</head>
+<body class="mono">
+
+<!-- ============================================================ -->
+<!-- BOOT / FACE-SCAN / UNLOCK -- purely cosmetic front door.       -->
+<!-- Does not authenticate anything; only gates how the HUD opens. -->
+<!-- ============================================================ -->
+<div id="boot-layer">
+  <div id="phase-init" class="boot-phase active">
+    <div class="boot-logo-ring"></div>
+    <div style="font-size:28px; letter-spacing:.35em; font-weight:300;">J . A . R . V . I . S</div>
+    <div style="color:var(--neon-cyan); font-size:13px; margin-top:14px; letter-spacing:.15em;">SYSTEM INITIALIZING...</div>
+    <div style="color:var(--text-secondary); font-size:11px; margin-top:6px; letter-spacing:.1em;">PLEASE SIT IN FRONT OF CAMERA</div>
+    <div id="init-countdown" class="mono" style="font-size:44px; color:var(--neon-cyan); margin-top:26px;">2</div>
+  </div>
+
+  <div id="phase-scan" class="boot-phase">
+    <div style="display:flex; gap:48px; align-items:center;">
+      <div id="scan-frame">
+        <img id="scan-video" src="" alt=""/>
+        <canvas id="scan-canvas"></canvas>
+      </div>
+      <div style="text-align:left; width:180px;">
+        <div style="color:var(--text-secondary); font-size:11px; letter-spacing:.1em;">FACE MATCHING</div>
+        <div id="scan-pct" class="mono" style="color:var(--neon-cyan); font-size:30px; font-weight:700; margin:6px 0 14px;">0%</div>
+        <div style="height:4px; background:var(--neon-dim); border-radius:2px; overflow:hidden; width:100%;">
+          <div id="scan-bar" style="height:100%; width:0%; background:var(--neon-cyan); transition:width .2s;"></div>
+        </div>
+        <div id="scan-status" style="color:var(--text-secondary); font-size:11px; margin-top:14px;">SCANNING...</div>
+        <div style="color:var(--text-secondary); font-size:10px; margin-top:3px;">PLEASE HOLD STILL</div>
+      </div>
+    </div>
+    <div id="skip-link">no camera? click to continue</div>
+  </div>
+
+  <div id="phase-unlock" class="boot-phase" style="position:relative; width:100%; height:100%;">
+    <div style="position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center;">
+      <div class="unlock-ring" id="unlock-ring-1" style="width:120px;height:120px;"></div>
+      <div class="unlock-ring" id="unlock-ring-2" style="width:120px;height:120px;"></div>
+      <div style="font-size:24px; font-weight:700; color:var(--text-primary); z-index:1;">ACCESS GRANTED</div>
+      <div id="unlock-welcome" class="mono" style="font-size:12px; color:var(--text-secondary); margin-top:10px; letter-spacing:.1em; z-index:1;"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- MAIN HUD                                                       -->
+<!-- ============================================================ -->
+<div id="main-hud" style="height:100vh; display:flex; flex-direction:column; opacity:0; transition:opacity .5s;">
+
+  <!-- top bar -->
+  <div style="display:flex; justify-content:space-between; align-items:flex-start; padding:16px 20px 6px;">
+    <div id="camera-box" class="glass" style="width:190px; height:128px; position:relative; overflow:hidden;">
+      <div style="position:absolute; top:6px; left:10px; font-size:10px; font-weight:700; color:var(--text-secondary); z-index:2; letter-spacing:.08em;">CAMERA</div>
+      <img id="camera-feed" src="" style="display:none; width:100%; height:100%; object-fit:cover;"/>
+      <div id="camera-placeholder" style="height:100%; display:flex; align-items:center; justify-content:center;
+        color:var(--neon-dim); font-size:11px; text-align:center;">CAMERA<br/>OFF</div>
+    </div>
+    <div style="display:flex; gap:10px;">
+      <div class="glass" style="width:150px; height:70px; padding:8px 12px;">
+        <div style="font-size:9px; font-weight:700; color:var(--text-secondary); letter-spacing:.08em;">DATE &amp; TIME</div>
+        <div id="hud-date" class="mono" style="font-size:12px; font-weight:700; margin-top:8px;">--</div>
+        <div id="hud-time" class="mono" style="font-size:12px; color:var(--text-secondary);">--:--:--</div>
+      </div>
+      <div class="glass" style="width:210px; height:70px; padding:8px 12px;">
+        <div style="font-size:9px; font-weight:700; color:var(--text-secondary); letter-spacing:.08em;">SYSTEM METRICS</div>
+        <div style="display:flex; gap:16px; margin-top:8px;">
+          <span id="hud-cpu" class="mono" style="font-size:11px;">CPU --%</span>
+          <span id="hud-ram" class="mono" style="font-size:11px;">RAM --%</span>
+        </div>
+        <div id="hud-net" class="mono" style="font-size:11px; margin-top:4px;">NET -- KB/s</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- center -->
+  <div style="flex:1; display:flex; flex-direction:column; align-items:center; justify-content:flex-end; padding-bottom:14px;">
+    <canvas id="orb-canvas" width="300" height="300"></canvas>
+    <div id="hud-status" style="font-size:16px; font-weight:700; color:var(--neon-cyan); margin-top:10px; letter-spacing:.05em;">IDLE</div>
+    <div id="hud-substatus" style="font-size:11px; color:var(--text-secondary); margin-top:3px;">System is ready</div>
+    <div id="hud-vision-status" style="font-size:11px; color:var(--text-secondary); margin-top:8px; height:14px;"></div>
+  </div>
+
+  <!-- dock -->
+  <div style="display:flex; gap:10px; padding:0 20px 20px;">
+    <input id="entry" type="text" placeholder="Type a command, or use the mic (English / farsi) ..."
+      class="mono" style="flex:1; background:var(--bg-secondary); border:1px solid var(--neon-dim); border-radius:10px;
+      color:var(--text-primary); padding:0 14px; height:44px; font-size:13px;"/>
+    <button class="dock-btn" id="btn-mic">LISTEN</button>
+    <button class="dock-btn" id="btn-lang">FA-&gt;EN</button>
+    <button class="dock-btn" id="btn-vision">VISION</button>
+    <button class="dock-btn" id="btn-camera">CAM</button>
+    <button class="dock-btn" id="btn-voice">JARVIS M</button>
+    <button class="dock-btn" id="btn-network">ONLINE</button>
+    <button class="dock-btn" id="btn-drawer">LOG</button>
+    <button class="dock-btn" id="btn-memory">MEMORY</button>
+    <button class="dock-btn" id="btn-export" style="width:44px; padding:0;">EXP</button>
+    <button class="dock-btn" id="btn-send" style="background:var(--neon-blue); color:#03060a;">SEND</button>
+  </div>
+
+  <!-- memory panel -->
+  <div id="memory-panel" class="glass" style="display:none; margin:0 20px 16px; padding:16px;">
+    <div style="font-size:12px; font-weight:700; color:var(--text-secondary); margin-bottom:8px;">SAVED MEMORY</div>
+    <div id="memory-list" class="mono" style="background:var(--bg-secondary); border-radius:10px; padding:10px;
+      font-size:12px; max-height:120px; overflow-y:auto; margin-bottom:10px; white-space:pre-line;">(nothing saved yet)</div>
+    <div style="display:flex; gap:8px; margin-bottom:8px;">
+      <input id="memory-add-input" class="mono" placeholder="Fact to remember ..." style="flex:1; background:var(--bg-secondary);
+        border:1px solid var(--neon-dim); border-radius:8px; color:var(--text-primary); padding:0 10px; height:36px; font-size:12px;"/>
+      <button class="dock-btn" id="btn-memory-add" style="background:var(--ok); color:#03060a;">Remember</button>
+    </div>
+    <div style="display:flex; gap:8px;">
+      <input id="memory-forget-input" class="mono" placeholder="Paste exact saved line to remove ..." style="flex:1; background:var(--bg-secondary);
+        border:1px solid var(--neon-dim); border-radius:8px; color:var(--text-primary); padding:0 10px; height:36px; font-size:12px;"/>
+      <button class="dock-btn" id="btn-memory-forget" style="background:#4a2a2a;">Forget</button>
+    </div>
+  </div>
+</div>
+
+<!-- chat drawer -->
+<div id="drawer-wrap">
+  <div id="drawer-notch">
+    <svg viewBox="0 0 100 100" preserveAspectRatio="none">
+      <path d="M100,0 Q20,0 0,50 Q20,100 100,100 Z"/>
+    </svg>
+  </div>
+  <div id="drawer-panel">
+    <div style="font-size:12px; font-weight:700; color:var(--text-secondary); margin-bottom:8px; letter-spacing:.08em;">CHAT LOG</div>
+    <div id="chat-log" class="mono" style="flex:1; overflow-y:auto; font-size:12px; line-height:1.5; padding-right:4px;"></div>
+    <div style="font-size:10px; font-weight:700; color:var(--text-secondary); margin:10px 0 4px; letter-spacing:.08em;">REASONING STREAM</div>
+    <div id="reasoning-log" class="mono" style="height:110px; overflow-y:auto; font-size:10px; color:var(--text-secondary);
+      background:var(--bg-secondary); border-radius:10px; padding:8px; line-height:1.5;"></div>
+  </div>
+</div>
+
+<script>
+const FACE_EDGES = [[10,338],[338,297],[297,332],[332,284],[284,251],[251,389],[389,356],[356,454],[454,323],[323,361],[361,288],[288,397],[397,365],[365,379],[379,378],[378,400],[400,377],[377,152],[152,148],[148,176],[176,149],[149,150],[150,136],[136,172],[172,58],[58,132],[132,93],[93,234],[234,127],[127,162],[162,21],[21,54],[54,103],[103,67],[67,109],[109,10],[33,7],[7,163],[163,144],[144,145],[145,153],[153,154],[154,155],[155,133],[133,173],[173,157],[157,158],[158,159],[159,160],[160,161],[161,246],[246,33],[263,249],[249,390],[390,373],[373,374],[374,380],[380,381],[381,382],[382,398],[398,384],[384,385],[385,386],[386,387],[387,388],[388,466],[466,263],[55,65],[65,52],[52,53],[53,46],[46,124],[124,35],[35,111],[111,117],[117,118],[118,119],[119,120],[120,121],[121,128],[128,245],[245,193],[193,55],[285,295],[295,282],[282,283],[283,276],[276,353],[353,265],[265,261],[261,448],[448,449],[449,450],[450,451],[451,452],[452,464],[464,417],[417,413],[413,285],[168,6],[6,197],[197,195],[195,5],[5,4],[4,45],[45,220],[220,115],[115,64],[64,98],[98,97],[97,2],[2,326],[326,327],[327,294],[294,278],[278,344],[344,440],[440,275],[61,146],[146,91],[91,181],[181,84],[84,17],[17,314],[314,405],[405,321],[321,375],[375,291],[291,308],[308,324],[324,318],[318,402],[402,317],[317,14],[14,87],[87,178],[178,88],[88,95],[95,185],[185,40],[40,39],[39,37],[37,0],[0,267],[267,269],[269,270],[270,409],[409,415],[415,310],[310,311],[311,312],[312,13],[13,82],[82,81],[81,80],[80,191],[191,78]];
+
+// ---------------------------------------------------------------
+// tiny fetch helpers
+// ---------------------------------------------------------------
+async function postAction(action, extra) {
+  try {
+    const res = await fetch('/api/action', {
+      method: 'POST', headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify(Object.assign({action}, extra || {}))
+    });
+    return await res.json();
+  } catch (e) { return {ok:false, error:String(e)}; }
+}
+async function getState() {
+  const res = await fetch('/api/state', {cache:'no-store'});
+  return await res.json();
+}
+
+// ---------------------------------------------------------------
+// BOOT SEQUENCE
+// ---------------------------------------------------------------
+const bootLayer = document.getElementById('boot-layer');
+const phaseInit = document.getElementById('phase-init');
+const phaseScan = document.getElementById('phase-scan');
+const phaseUnlock = document.getElementById('phase-unlock');
+const mainHud = document.getElementById('main-hud');
+const scanVideo = document.getElementById('scan-video');
+const scanCanvas = document.getElementById('scan-canvas');
+const scanCtx = scanCanvas.getContext('2d');
+const skipLink = document.getElementById('skip-link');
+
+let bootDone = false;
+let stableFaceMs = 0;
+let lastTick = performance.now();
+const STABLE_REQUIRED_MS = 2400;
+
+function setBootPhase(name) {
+  [phaseInit, phaseScan, phaseUnlock].forEach(el => el.classList.remove('active'));
+  ({init: phaseInit, scan: phaseScan, unlock: phaseUnlock})[name].classList.add('active');
+}
+
+let countdown = 2;
+const countdownEl = document.getElementById('init-countdown');
+const countdownTimer = setInterval(() => {
+  countdown -= 1;
+  if (countdown <= 0) {
+    clearInterval(countdownTimer);
+    setBootPhase('scan');
+    scanVideo.src = '/camera.mjpg?boot=' + Date.now();
+    setTimeout(() => skipLink.classList.add('show'), 6000);
+  } else {
+    countdownEl.textContent = countdown;
+  }
+}, 1000);
+
+skipLink.addEventListener('click', () => finishUnlock());
+
+function drawFaceMesh(landmarks) {
+  const w = scanCanvas.width = scanCanvas.clientWidth;
+  const h = scanCanvas.height = scanCanvas.clientHeight;
+  scanCtx.clearRect(0, 0, w, h);
+  if (!landmarks || !landmarks.length) return;
+  const pt = i => landmarks[i] ? [ (1 - landmarks[i][0]) * w, landmarks[i][1] * h ] : null;
+  scanCtx.strokeStyle = 'rgba(0,229,255,0.85)';
+  scanCtx.lineWidth = 1;
+  scanCtx.beginPath();
+  for (const pair of FACE_EDGES) {
+    const pa = pt(pair[0]), pb = pt(pair[1]);
+    if (!pa || !pb) continue;
+    scanCtx.moveTo(pa[0], pa[1]);
+    scanCtx.lineTo(pb[0], pb[1]);
+  }
+  scanCtx.stroke();
+}
+
+function finishUnlock() {
+  if (bootDone) return;
+  bootDone = true;
+  postAction('face_unlock');
+  setBootPhase('unlock');
+  document.getElementById('unlock-welcome').textContent = 'WELCOME BACK AMIRALI';
+  ['unlock-ring-1', 'unlock-ring-2'].forEach((id, i) => {
+    const el = document.getElementById(id);
+    el.animate(
+      [{width:'120px', height:'120px', opacity:0.9}, {width: (900+i*400)+'px', height:(900+i*400)+'px', opacity:0}],
+      {duration: 1000, easing:'ease-out', fill:'forwards'}
+    );
+  });
+  setTimeout(() => {
+    bootLayer.classList.add('hidden');
+    mainHud.style.opacity = '1';
+  }, 1100);
+}
+
+// ---------------------------------------------------------------
+// CENTRAL ORB
+// ---------------------------------------------------------------
+const orbCanvas = document.getElementById('orb-canvas');
+const orbCtx = orbCanvas.getContext('2d');
+let orbState = 'idle';
+const orbT0 = performance.now();
+const particles = Array.from({length:16}, function(_, i){ return {angle:i*(360/16), speed:0.55+0.18*(i%3)}; });
+
+function blend(hexA, hexB, t) {
+  const a = [1,3,5].map(function(i){ return parseInt(hexA.substr(i,2),16); });
+  const b = [1,3,5].map(function(i){ return parseInt(hexB.substr(i,2),16); });
+  const c = a.map(function(v,i){ return Math.round(v+(b[i]-v)*t); });
+  return 'rgb(' + c[0] + ',' + c[1] + ',' + c[2] + ')';
+}
+const CYAN='#00e5ff', BLUE='#0072ff', DIM='#0a3d4d', OK='#00ffb0', PANEL='#0a1420';
+
+function ring(cx, cy, r, color, width, start, extent) {
+  orbCtx.strokeStyle = color; orbCtx.lineWidth = width;
+  orbCtx.beginPath();
+  orbCtx.arc(cx, cy, r, (start||0)*Math.PI/180, ((start||0)+(extent||360))*Math.PI/180);
+  orbCtx.stroke();
+}
+
+function drawOrb() {
+  const w = orbCanvas.width, h = orbCanvas.height, cx=w/2, cy=h/2;
+  const t = (performance.now() - orbT0) / 1000;
+  orbCtx.clearRect(0,0,w,h);
+  const baseR = w*0.30;
+
+  if (orbState === 'idle') {
+    const breathe = (Math.sin(t*1.1)+1)/2;
+    [1.0,0.86,0.72].forEach(function(frac,i){ ring(cx,cy, baseR*frac+breathe*6, blend(CYAN,PANEL,0.15+i*0.25), 1.4); });
+    ring(cx,cy, baseR*0.55, DIM, 1);
+  } else if (orbState === 'listening') {
+    const pulse = (Math.sin(t*4)+1)/2;
+    ring(cx,cy, baseR+pulse*8, OK, 2);
+    ring(cx,cy, baseR*0.6, OK, 1);
+  } else if (orbState === 'thinking') {
+    ring(cx,cy, baseR, DIM, 1);
+    particles.forEach(function(p){
+      const a = (p.angle + t*60*p.speed) * Math.PI/180;
+      const r = baseR*1.13;
+      const x = cx + r*Math.cos(a), y = cy + r*Math.sin(a);
+      orbCtx.fillStyle = CYAN; orbCtx.beginPath(); orbCtx.arc(x,y,2.4,0,7); orbCtx.fill();
+    });
+    ring(cx,cy, baseR*0.88, BLUE, 3, (t*140)%360, 70);
+    ring(cx,cy, baseR*0.5, DIM, 1);
+  } else if (orbState === 'speaking') {
+    ring(cx,cy, baseR*0.85, DIM, 1);
+    const bars=32, maxH=w*0.16;
+    for (let i=0;i<bars;i++){
+      const a=i*(360/bars)*Math.PI/180;
+      const phase=t*6+i*0.35;
+      const amp=(Math.sin(phase)*0.5+0.5)*(0.35+0.65*Math.abs(Math.sin(i*0.9+t)));
+      const hlen=6+amp*maxH, r0=baseR*0.55;
+      orbCtx.strokeStyle=CYAN; orbCtx.lineWidth=3; orbCtx.lineCap='round';
+      orbCtx.beginPath();
+      orbCtx.moveTo(cx+r0*Math.cos(a), cy+r0*Math.sin(a));
+      orbCtx.lineTo(cx+(r0+hlen)*Math.cos(a), cy+(r0+hlen)*Math.sin(a));
+      orbCtx.stroke();
+    }
+  } else if (orbState === 'vision') {
+    ring(cx,cy, baseR, OK, 1.4);
+    [[1,0],[-1,0],[0,1],[0,-1]].forEach(function(pair){
+      const dx=pair[0], dy=pair[1];
+      orbCtx.strokeStyle=OK; orbCtx.lineWidth=2; orbCtx.beginPath();
+      orbCtx.moveTo(cx+dx*baseR*0.5, cy+dy*baseR*0.5);
+      orbCtx.lineTo(cx+dx*(baseR*0.5+14), cy+dy*(baseR*0.5+14));
+      orbCtx.stroke();
+    });
+    const sweepY = cy - baseR + ((t*70) % (baseR*2));
+    orbCtx.strokeStyle=OK; orbCtx.lineWidth=1; orbCtx.beginPath();
+    orbCtx.moveTo(cx-baseR, sweepY); orbCtx.lineTo(cx+baseR, sweepY); orbCtx.stroke();
+  }
+
+  orbCtx.fillStyle = '#d6faff'; orbCtx.font = 'bold 16px Sora'; orbCtx.textAlign = 'center';
+  orbCtx.fillText('JARVIS', cx, cy-4);
+  requestAnimationFrame(drawOrb);
+}
+requestAnimationFrame(drawOrb);
+
+// ---------------------------------------------------------------
+// STATE POLLING
+// ---------------------------------------------------------------
+let lastChatCount = 0;
+let drawerOpen = false;
+let memoryOpen = false;
+
+function escapeHtml(s){ const d=document.createElement('div'); d.textContent=s; return d.innerHTML; }
+
+function renderChat(chat) {
+  const box = document.getElementById('chat-log');
+  if (chat.length === lastChatCount) return;
+  box.innerHTML = chat.map(function(m){
+    const color = m.speaker === 'user' ? 'var(--ok)' : m.speaker === 'jarvis' ? 'var(--neon-cyan)' : 'var(--text-secondary)';
+    const label = m.speaker === 'user' ? 'YOU' : m.speaker === 'jarvis' ? 'JARVIS' : 'SYSTEM';
+    return '<div style="margin-bottom:8px;"><span style="color:' + color + '; font-weight:700;">' + label + ':</span> ' + escapeHtml(m.text) + '</div>';
+  }).join('');
+  box.scrollTop = box.scrollHeight;
+  lastChatCount = chat.length;
+}
+
+async function pollLoop() {
+  try {
+    const s = await getState();
+
+    if (!bootDone) {
+      if (s.face_detected) {
+        const dt = performance.now() - lastTick;
+        stableFaceMs += dt;
+        drawFaceMesh(s.face_landmarks);
+      } else {
+        stableFaceMs = 0;
+        drawFaceMesh([]);
+      }
+      lastTick = performance.now();
+      const pct = Math.min(100, Math.round(stableFaceMs / STABLE_REQUIRED_MS * 100));
+      document.getElementById('scan-pct').textContent = pct + '%';
+      document.getElementById('scan-bar').style.width = pct + '%';
+      document.getElementById('scan-status').textContent = s.face_detected ? 'FACE LOCKED...' : 'SCANNING...';
+      if (stableFaceMs >= STABLE_REQUIRED_MS) finishUnlock();
+    }
+
+    orbState = s.vision ? 'vision' : s.speaking ? 'speaking' : s.listening ? 'listening' : s.busy ? 'thinking' : 'idle';
+
+    document.getElementById('hud-status').textContent = s.status;
+    document.getElementById('hud-substatus').textContent = s.sub_status;
+    document.getElementById('hud-vision-status').textContent = s.vision_status || '';
+    document.getElementById('hud-date').textContent = s.date;
+    document.getElementById('hud-time').textContent = s.clock;
+    document.getElementById('hud-cpu').textContent = 'CPU ' + (s.cpu==null?'--':Math.round(s.cpu)) + '%';
+    document.getElementById('hud-ram').textContent = 'RAM ' + (s.ram==null?'--':Math.round(s.ram)) + '%';
+    document.getElementById('hud-net').textContent = 'NET ' + (s.net_kbps==null?'--':Math.round(s.net_kbps)) + ' KB/s';
+
+    const camImg = document.getElementById('camera-feed');
+    const camPh = document.getElementById('camera-placeholder');
+    if (s.camera_active) {
+      if (camImg.style.display === 'none') { camImg.src = '/camera.mjpg?t=' + Date.now(); camImg.style.display = 'block'; camPh.style.display = 'none'; }
+    } else {
+      camImg.style.display = 'none'; camImg.src=''; camPh.style.display = 'flex';
+    }
+
+    document.getElementById('btn-mic').classList.toggle('alert', s.listening);
+    document.getElementById('btn-vision').classList.toggle('active', s.vision);
+    document.getElementById('btn-camera').classList.toggle('active', s.camera_active);
+    document.getElementById('btn-lang').textContent = s.lang;
+    document.getElementById('btn-voice').textContent = s.voice_profile;
+    document.getElementById('btn-network').textContent = s.network_mode;
+    document.getElementById('btn-network').classList.toggle('active', s.network_mode === 'ONLINE');
+    document.getElementById('btn-send').disabled = s.busy;
+    document.getElementById('btn-mic').disabled = s.busy;
+
+    renderChat(s.chat);
+    document.getElementById('reasoning-log').innerHTML = s.reasoning.map(function(l){ return '• ' + escapeHtml(l); }).join('<br/>');
+    if (memoryOpen) {
+      document.getElementById('memory-list').textContent = s.memory.length ? s.memory.map(function(f){return '• '+f;}).join('\n') : '(nothing saved yet)';
+    }
+  } catch (e) { /* transient network hiccup -- next poll retries */ }
+  setTimeout(pollLoop, 400);
+}
+pollLoop();
+
+// ---------------------------------------------------------------
+// DOCK WIRING
+// ---------------------------------------------------------------
+function sendEntry() {
+  const el = document.getElementById('entry');
+  const text = el.value.trim();
+  if (!text) return;
+  el.value = '';
+  postAction('send', {text: text});
+}
+document.getElementById('btn-send').addEventListener('click', sendEntry);
+document.getElementById('entry').addEventListener('keydown', function(e){ if (e.key === 'Enter') sendEntry(); });
+document.getElementById('btn-mic').addEventListener('click', function(){ postAction('mic'); });
+document.getElementById('btn-lang').addEventListener('click', function(){ postAction('lang'); });
+document.getElementById('btn-vision').addEventListener('click', function(){ postAction('vision'); });
+document.getElementById('btn-camera').addEventListener('click', function(){ postAction('camera'); });
+document.getElementById('btn-voice').addEventListener('click', function(){ postAction('voice'); });
+document.getElementById('btn-network').addEventListener('click', function(){ postAction('network'); });
+document.getElementById('btn-export').addEventListener('click', function(){ postAction('export'); });
+
+document.getElementById('btn-drawer').addEventListener('click', function(){
+  drawerOpen = !drawerOpen;
+  document.getElementById('drawer-wrap').classList.toggle('open', drawerOpen);
+  document.getElementById('btn-drawer').classList.toggle('active', drawerOpen);
+});
+
+document.getElementById('btn-memory').addEventListener('click', async function(){
+  memoryOpen = !memoryOpen;
+  document.getElementById('memory-panel').style.display = memoryOpen ? 'block' : 'none';
+  document.getElementById('btn-memory').classList.toggle('active', memoryOpen);
+  if (memoryOpen) await postAction('memory_open');
+});
+document.getElementById('btn-memory-add').addEventListener('click', function(){
+  const el = document.getElementById('memory-add-input');
+  const text = el.value.trim();
+  if (!text) return;
+  el.value = '';
+  postAction('memory_add', {text: text});
+});
+document.getElementById('btn-memory-forget').addEventListener('click', function(){
+  const el = document.getElementById('memory-forget-input');
+  const text = el.value.trim();
+  if (!text) return;
+  el.value = '';
+  postAction('memory_forget', {text: text});
+});
+
+window.addEventListener('beforeunload', function(){
+  navigator.sendBeacon && navigator.sendBeacon('/api/action', JSON.stringify({action:'close'}));
+});
+</script>
+</body>
+</html>
